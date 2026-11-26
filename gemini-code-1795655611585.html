@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glowing Flower Animation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #02040a;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    /* Deep midnight-blue top fading to pitch-black ground like the video */
+    .scene {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      background: linear-gradient(
+        180deg,
+        #030917 0%,
+        #07142b 36%,
+        #050a14 68%,
+        #010103 100%
+      );
+      overflow: hidden;
+    }
+
+    /* Subtle warm ambient horizon glow */
+    .ground-glow {
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 85%;
+      height: 120px;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(255, 110, 0, 0.14) 0%,
+        rgba(255, 70, 0, 0.03) 55%,
+        transparent 75%
+      );
+      pointer-events: none;
+    }
+
+    /* Crisp tiny floating golden dust motes */
+    .particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2.5px;
+      height: 2.5px;
+      border-radius: 50%;
+      background: #ffd166;
+      box-shadow: 0 0 6px #ff9e00, 0 0 12px rgba(255, 140, 0, 0.7);
+      opacity: 0;
+      animation: floatMote var(--dur, 9s) ease-in-out var(--delay, 0s) infinite;
+    }
+
+    @keyframes floatMote {
+      0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.7);
+      }
+      25% {
+        opacity: 0.85;
+      }
+      75% {
+        opacity: 0.7;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--dx, 18px), var(--dy, -70px)) scale(1.1);
+      }
+    }
+
+    /* Individual Flower Wrapper - spaced cleanly across viewport */
+    .flower {
+      position: absolute;
+      bottom: 0;
+      left: var(--x, 50%);
+      width: 10px;
+      height: var(--stem-h, 36vh);
+      transform: translateX(-50%);
+      z-index: var(--z, 1);
+      pointer-events: none;
+    }
+
+    .sway-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-origin: bottom center;
+    }
+
+    .flower.animate .sway-wrap {
+      animation: breezeSway var(--sway-dur, 4.8s) ease-in-out infinite alternate;
+    }
+
+    @keyframes breezeSway {
+      0% { transform: rotate(-1.6deg); }
+      100% { transform: rotate(1.6deg); }
+    }
+
+    /* Slender glowing stem */
+    .stem {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: var(--stem-w, 2.5px);
+      height: 100%;
+      transform: translateX(-50%) scaleY(0);
+      transform-origin: bottom center;
+      border-radius: 3px;
+      background: linear-gradient(
+        to top,
+        #2b0d03 0%,
+        #8a330a 50%,
+        #d95b14 100%
+      );
+      box-shadow: 0 0 8px rgba(255, 102, 0, 0.35);
+    }
+
+    .flower.animate .stem {
+      animation: growStem 1.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes growStem {
+      0% { transform: translateX(-50%) scaleY(0); }
+      100% { transform: translateX(-50%) scaleY(1); }
+    }
+
+    /* Slender upward-curving grass/lily leaves hugging the stem */
+    .leaf {
+      position: absolute;
+      bottom: var(--b, 15%);
+      left: 50%;
+      width: var(--lw, 22px);
+      height: var(--lh, 48px);
+      opacity: 0;
+      transform: scale(0);
+    }
+
+    .leaf.left {
+      margin-left: calc(var(--lw, 22px) * -1);
+      transform-origin: bottom right;
+      border-right: 2.2px solid #9e3d0e;
+      border-top: 1.5px solid #c45116;
+      border-radius: 0 100% 0 0;
+      background: linear-gradient(135deg, rgba(168, 64, 14, 0.55), rgba(55, 18, 4, 0.1));
+    }
+
+    .leaf.right {
+      margin-left: 0;
+      transform-origin: bottom left;
+      border-left: 2.2px solid #9e3d0e;
+      border-top: 1.5px solid #c45116;
+      border-radius: 100% 0 0 0;
+      background: linear-gradient(225deg, rgba(168, 64, 14, 0.55), rgba(55, 18, 4, 0.1));
+    }
+
+    .flower.animate .leaf {
+      animation: sproutLeaf 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation-delay: var(--ldelay, 0.35s);
+    }
+
+    @keyframes sproutLeaf {
+      0% {
+        opacity: 0;
+        transform: scale(0) rotate(var(--r0, 10deg));
+      }
+      100% {
+        opacity: 0.92;
+        transform: scale(1) rotate(0deg);
+      }
+    }
+
+    /* Blossom Head at top of stem */
+    .blossom {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: var(--head-size, 48px);
+      height: var(--head-size, 48px);
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+    }
+
+    .flower.animate .blossom {
+      animation: bloomHead 1.1s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+    }
+
+    @keyframes bloomHead {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0) rotate(-25deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+      }
+    }
+
+    /* Soft radial aura behind each flower */
+    .aura {
+      position: absolute;
+      inset: -65%;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(255, 145, 20, 0.42) 0%,
+        rgba(255, 85, 0, 0.14) 50%,
+        transparent 72%
+      );
+      pointer-events: none;
+    }
+
+    /* 6 Rounded Glowing Tangerine-Gold Petals */
+    .petal {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      width: 34%;
+      height: 52%;
+      margin-left: -17%;
+      transform-origin: bottom center;
+      transform: rotate(var(--deg)) translateY(-6%) scale(0.25);
+      border-radius: 50% 50% 45% 45% / 65% 65% 35% 35%;
+      background: radial-gradient(
+        circle at 50% 88%,
+        #ffe066 0%,
+        #ff8c00 42%,
+        #f24c00 88%,
+        #c92a00 100%
+      );
+      box-shadow:
+        0 0 12px rgba(255, 115, 0, 0.75),
+        inset 0 -4px 8px rgba(170, 25, 0, 0.45);
+    }
+
+    .flower.animate .petal {
+      animation: openPetal 0.95s cubic-bezier(0.16, 1, 0.3, 1) 1.25s forwards;
+    }
+
+    @keyframes openPetal {
+      0% {
+        transform: rotate(var(--deg)) translateY(0%) scale(0.25);
+      }
+      100% {
+        transform: rotate(var(--deg)) translateY(-10%) scale(1);
+      }
+    }
+
+    /* Bright Golden Core */
+    .core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 28%;
+      height: 28%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        #ffffff 0%,
+        #fff099 45%,
+        #ff9e00 90%
+      );
+      box-shadow:
+        0 0 8px #fff3b0,
+        0 0 18px #ffaa00,
+        0 0 28px #ff6200;
+      z-index: 2;
+    }
+
+    .flower.animate .core {
+      animation: corePulse 2.4s ease-in-out 2.3s infinite alternate;
+    }
+
+    @keyframes corePulse {
+      0% { transform: translate(-50%, -50%) scale(0.92); filter: brightness(0.95); }
+      100% { transform: translate(-50%, -50%) scale(1.12); filter: brightness(1.2); }
+    }
+
+    /* Clean floating controls */
+    .controls {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 50;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      background: rgba(10, 20, 42, 0.72);
+      border: 1px solid rgba(255, 165, 70, 0.35);
+      color: #ffdfa8;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn:hover {
+      background: rgba(255, 130, 30, 0.22);
+      transform: scale(1.03);
+    }
+  </style>
+</head>
+<body>
+  <div class="scene" id="scene">
+    <div class="ground-glow"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="controls">
+      <button class="btn" id="musicBtn">🔊 Play Music</button>
+      <button class="btn" id="replayBtn">↻ Replay</button>
+    </div>
+  </div>
+
+  <script>
+    const scene = document.getElementById("scene");
+
+    // Exact perspective & spacing from the video:
+    // 0: Hero center-left flower
+    // 1-4: Small distant midground flowers
+    // 5: Tall foreground flower on right
+    // 6: Tall foreground flower on left
+    // 7-8: Far outer background flowers
+    const flowerSpecs = [
+      { x: "43%", stemH: "39vh", head: "clamp(42px, 8.5vmin, 62px)",  stemW: "2.6px", z: 3, sway: "4.6s" },
+      { x: "20%", stemH: "30vh", head: "clamp(30px, 6.2vmin, 44px)",  stemW: "2.0px", z: 2, sway: "5.2s" },
+      { x: "32%", stemH: "27vh", head: "clamp(26px, 5.5vmin, 38px)",  stemW: "1.8px", z: 1, sway: "4.9s" },
+      { x: "53%", stemH: "32vh", head: "clamp(32px, 6.5vmin, 46px)",  stemW: "2.0px", z: 2, sway: "5.4s" },
+      { x: "62%", stemH: "28vh", head: "clamp(28px, 5.8vmin, 40px)",  stemW: "1.8px", z: 1, sway: "5.0s" },
+      { x: "75%", stemH: "47vh", head: "clamp(58px, 11.5vmin, 84px)", stemW: "3.2px", z: 4, sway: "4.4s" },
+      { x: "27%", stemH: "44vh", head: "clamp(54px, 10.8vmin, 78px)", stemW: "3.0px", z: 5, sway: "4.7s" },
+      { x: "12%", stemH: "25vh", head: "clamp(24px, 5.0vmin, 35px)",  stemW: "1.7px", z: 1, sway: "5.5s" },
+      { x: "87%", stemH: "26vh", head: "clamp(26px, 5.2vmin, 36px)",  stemW: "1.7px", z: 1, sway: "5.3s" }
+    ];
+
+    const leafLayout = [
+      { side: "left",  b: "4%",  lw: "18px", lh: "44px", delay: "0.20s", r0: "12deg" },
+      { side: "right", b: "8%",  lw: "18px", lh: "42px", delay: "0.28s", r0: "-12deg" },
+      { side: "left",  b: "22%", lw: "16px", lh: "38px", delay: "0.42s", r0: "10deg" },
+      { side: "right", b: "28%", lw: "16px", lh: "36px", delay: "0.52s", r0: "-10deg" },
+      { side: "left",  b: "44%", lw: "14px", lh: "32px", delay: "0.66s", r0: "8deg" },
+      { side: "right", b: "50%", lw: "14px", lh: "30px", delay: "0.76s", r0: "-8deg" },
+      { side: "left",  b: "66%", lw: "11px", lh: "24px", delay: "0.90s", r0: "6deg" },
+      { side: "right", b: "72%", lw: "11px", lh: "22px", delay: "1.00s", r0: "-6deg" }
+    ];
+
+    const flowers = flowerSpecs.map((spec) => {
+      const el = document.createElement("div");
+      el.className = "flower";
+      el.style.setProperty("--x", spec.x);
+      el.style.setProperty("--stem-h", spec.stemH);
+      el.style.setProperty("--head-size", spec.head);
+      el.style.setProperty("--stem-w", spec.stemW);
+      el.style.setProperty("--z", spec.z);
+      el.style.setProperty("--sway-dur", spec.sway);
+
+      const swayWrap = document.createElement("div");
+      swayWrap.className = "sway-wrap";
+
+      const stem = document.createElement("div");
+      stem.className = "stem";
+      swayWrap.appendChild(stem);
+
+      leafLayout.forEach((cfg) => {
+        const leaf = document.createElement("div");
+        leaf.className = `leaf ${cfg.side}`;
+        leaf.style.setProperty("--b", cfg.b);
+        leaf.style.setProperty("--lw", cfg.lw);
+        leaf.style.setProperty("--lh", cfg.lh);
+        leaf.style.setProperty("--ldelay", cfg.delay);
+        leaf.style.setProperty("--r0", cfg.r0);
+        swayWrap.appendChild(leaf);
+      });
+
+      const blossom = document.createElement("div");
+      blossom.className = "blossom";
+
+      const aura = document.createElement("div");
+      aura.className = "aura";
+      blossom.appendChild(aura);
+
+      for (let deg = 0; deg < 360; deg += 60) {
+        const petal = document.createElement("div");
+        petal.className = "petal";
+        petal.style.setProperty("--deg", `${deg}deg`);
+        blossom.appendChild(petal);
+      }
+
+      const core = document.createElement("div");
+      core.className = "core";
+      blossom.appendChild(core);
+
+      swayWrap.appendChild(blossom);
+      el.appendChild(swayWrap);
+      scene.appendChild(el);
+      return el;
+    });
+
+    // Subtle floating golden particles
+    const particlesEl = document.getElementById("particles");
+    for (let i = 0; i < 30; i++) {
+      const dot = document.createElement("div");
+      dot.className = "particle";
+      dot.style.left = `${5 + Math.random() * 90}%`;
+      dot.style.top = `${15 + Math.random() * 75}%`;
+      dot.style.setProperty("--dur", `${7 + Math.random() * 6}s`);
+      dot.style.setProperty("--delay", `${Math.random() * 6}s`);
+      dot.style.setProperty("--dx", `${(Math.random() - 0.5) * 40}px`);
+      dot.style.setProperty("--dy", `${-35 - Math.random() * 55}px`);
+      particlesEl.appendChild(dot);
+    }
+
+    // Staggered animation sequence matching the video
+    let sequenceTimers = [];
+
+    function runBloomSequence() {
+      sequenceTimers.forEach((id) => clearTimeout(id));
+      sequenceTimers = [];
+
+      flowers.forEach((f) => f.classList.remove("animate"));
+      void scene.offsetWidth; // force reflow so replay restarts cleanly
+
+      // 1. Hero flower blooms first
+      flowers[0].classList.add("animate");
+
+      // 2. Midground cluster blooms at 2.3s
+      const t1 = setTimeout(() => {
+        for (let i = 1; i <= 4; i++) {
+          flowers[i].classList.add("animate");
+        }
+
+        // 3. Foreground right, foreground left, then far edges
+        const remaining = flowers.slice(5);
+        remaining.forEach((flower, idx) => {
+          const t = setTimeout(() => {
+            flower.classList.add("animate");
+          }, (idx + 1) * 950);
+          sequenceTimers.push(t);
+        });
+      }, 2300);
+
+      sequenceTimers.push(t1);
+    }
+
+    runBloomSequence();
+
+    // =========================================================================
+    // Clean Cinematic Piano + Warm String Ensemble Audio (Web Audio API)
+    // =========================================================================
+    let audioCtx = null;
+    let isMusicPlaying = false;
+    let musicLoopId = null;
+    let masterBus = null;
+    const musicBtn = document.getElementById("musicBtn");
+
+    function initAudioGraph() {
+      if (audioCtx) return;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContextClass();
+
+      masterBus = audioCtx.createGain();
+      masterBus.gain.value = 0.75;
+
+      // Smooth stereo echo/reverb tail
+      const delay = audioCtx.createDelay();
+      delay.delayTime.value = 0.38;
+
+      const feedback = audioCtx.createGain();
+      feedback.gain.value = 0.36;
+
+      const wetFilter = audioCtx.createBiquadFilter();
+      wetFilter.type = "lowpass";
+      wetFilter.frequency.value = 1800;
+
+      delay.connect(wetFilter);
+      wetFilter.connect(feedback);
+      feedback.connect(delay);
+
+      masterBus.connect(audioCtx.destination);
+      masterBus.connect(delay);
+      delay.connect(audioCtx.destination);
+    }
+
+    function playWarmString(freq, start, dur, vol = 0.045) {
+      if (!audioCtx || !masterBus) return;
+      // Pure sine + soft octave triangle (no harsh sawtooth buzz)
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const env = audioCtx.createGain();
+
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(freq, start);
+
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(freq * 2, start);
+
+      const subGain = audioCtx.createGain();
+      subGain.gain.value = 0.22;
+
+      env.gain.setValueAtTime(0.0001, start);
+      env.gain.linearRampToValueAtTime(vol, start + dur * 0.38);
+      env.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+      osc1.connect(env);
+      osc2.connect(subGain);
+      subGain.connect(env);
+      env.connect(masterBus);
+
+      osc1.start(start);
+      osc2.start(start);
+      osc1.stop(start + dur + 0.05);
+      osc2.stop(start + dur + 0.05);
+    }
+
+    function playPianoNote(freq, start, dur, vol = 0.11) {
+      if (!audioCtx || !masterBus) return;
+      const fundamental = audioCtx.createOscillator();
+      const overtone = audioCtx.createOscillator();
+      const env = audioCtx.createGain();
+      const overEnv = audioCtx.createGain();
+
+      fundamental.type = "sine";
+      fundamental.frequency.setValueAtTime(freq, start);
+
+      overtone.type = "triangle";
+      overtone.frequency.setValueAtTime(freq * 2, start);
+
+      overEnv.gain.setValueAtTime(0.03, start);
+      overEnv.gain.exponentialRampToValueAtTime(0.0001, start + 0.45);
+
+      env.gain.setValueAtTime(0.0001, start);
+      env.gain.linearRampToValueAtTime(vol, start + 0.025);
+      env.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+      fundamental.connect(env);
+      overtone.connect(overEnv);
+      overEnv.connect(env);
+      env.connect(masterBus);
+
+      fundamental.start(start);
+      overtone.start(start);
+      fundamental.stop(start + dur + 0.05);
+      overtone.stop(start + dur + 0.05);
+    }
+
+    function playCinematicLoop() {
+      if (!audioCtx || !isMusicPlaying) return;
+      const t0 = audioCtx.currentTime + 0.05;
+
+      // Emotional cinematic progression (Dm -> Bb -> F -> C)
+      const bars = [
+        { t: 0.0, dur: 2.6, bass: 73.42,  pad: [146.83, 220.00, 293.66] }, // D minor
+        { t: 2.5, dur: 2.6, bass: 58.27,  pad: [116.54, 174.61, 233.08] }, // Bb major
+        { t: 5.0, dur: 2.6, bass: 87.31,  pad: [174.61, 220.00, 261.63] }, // F major
+        { t: 7.5, dur: 2.7, bass: 65.41,  pad: [130.81, 196.00, 261.63] }  // C major
+      ];
+
+      bars.forEach((b) => {
+        playWarmString(b.bass, t0 + b.t, b.dur, 0.07);
+        b.pad.forEach((note) => playWarmString(note, t0 + b.t, b.dur, 0.032));
+      });
+
+      // Expressive high piano melody
+      const melody = [
+        { t: 0.15, f: 587.33, d: 1.5 }, // D5
+        { t: 0.85, f: 659.25, d: 1.4 }, // E5
+        { t: 1.50, f: 698.46, d: 1.8 }, // F5
+        { t: 2.60, f: 587.33, d: 1.6 }, // D5
+        { t: 3.40, f: 523.25, d: 1.5 }, // C5
+        { t: 4.10, f: 466.16, d: 1.7 }, // Bb4
+        { t: 5.15, f: 523.25, d: 1.6 }, // C5
+        { t: 5.95, f: 698.46, d: 1.7 }, // F5
+        { t: 6.75, f: 659.25, d: 1.5 }, // E5
+        { t: 7.60, f: 587.33, d: 1.6 }, // D5
+        { t: 8.45, f: 523.25, d: 2.1 }  // C5
+      ];
+
+      melody.forEach((m) => playPianoNote(m.f, t0 + m.t, m.d, 0.095));
+    }
+
+    async function toggleMusic(forceStart = false) {
+      initAudioGraph();
+
+      if (isMusicPlaying && !forceStart) {
+        isMusicPlaying = false;
+        clearInterval(musicLoopId);
+        await audioCtx.suspend();
+        musicBtn.textContent = "🔊 Play Music";
+        return;
+      }
+
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
+
+      if (!isMusicPlaying) {
+        isMusicPlaying = true;
+        musicBtn.textContent = "⏸ Pause Music";
+        playCinematicLoop();
+        musicLoopId = setInterval(playCinematicLoop, 10000);
+      }
+    }
+
+    musicBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleMusic(false);
+    });
+
+    document.getElementById("replayBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      runBloomSequence();
+      if (!isMusicPlaying) {
+        toggleMusic(true);
+      }
+    });
+
+    // Unlock audio smoothly on first tap anywhere on the page
+    document.addEventListener("pointerdown", () => {
+      if (!isMusicPlaying) {
+        toggleMusic(true);
+      }
+    }, { once: true });
+  </script>
+</body>
+</html>
